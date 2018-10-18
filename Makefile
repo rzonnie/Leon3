@@ -1,6 +1,5 @@
-GRLIB=../..
 TOP=leon3mp
-BOARD=gr-cpci-xc4v
+BOARD=terasic-de2-ep4c115
 include $(GRLIB)/boards/$(BOARD)/Makefile.inc
 DEVICE=$(PART)-$(PACKAGE)$(SPEED)
 UCF=$(GRLIB)/boards/$(BOARD)/$(TOP).ucf
@@ -15,8 +14,11 @@ SDCFILE=$(GRLIB)/boards/$(BOARD)/default.sdc
 BITGEN=$(GRLIB)/boards/$(BOARD)/default.ut
 CLEAN=soft-clean
 
-TECHLIBS = unisim
-DIRSKIP = leon4v0
+TECHLIBS = altera altera_mf cycloneiii
+LIBSKIP = 
+DIRSKIP =
+FILESKIP =
+ 
 include $(GRLIB)/bin/Makefile
 include $(GRLIB)/software/leon3/Makefile
 
