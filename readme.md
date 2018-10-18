@@ -73,7 +73,7 @@ export PATH=$PATH:${QSYS_ROOTDIR}
 export QUARTUS_64BIT=1
 
 export QSYS_ROOTDIR="QUARTUS_ROOTDIR/sopc_builder/bin"
-```
+
 # ModelSIM
 export PATH=$PATH:${ALTERAPATH}/modelsim_ase/bin
 ```
