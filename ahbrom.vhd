@@ -1,7 +1,7 @@
 
 ----------------------------------------------------------------------------
 --  This file is a part of the GRLIB VHDL IP LIBRARY
---  Copyright (C) 2009 Aeroflex Gaisler
+--  Copyright (C) 2010 Aeroflex Gaisler
 ----------------------------------------------------------------------------
 -- Entity: 	ahbrom
 -- File:	ahbrom.vhd
@@ -71,7 +71,7 @@ begin
 	hready <= ahbsi.hready;
 	ahbso.hready <=  (not rst) or (hsel and hready) or
 	  (ahbsi.hsel(hindex) and not ahbsi.htrans(1) and ahbsi.hready);
-        ahbso.hrdata  <= ahbdrivedata(romdata);
+	ahbso.hrdata  <= ahbdrivedata(romdata);
       end if;
     end process;
   end generate;
@@ -181,10 +181,10 @@ begin
     when 16#00063# => romdata <= X"12800016";
     when 16#00064# => romdata <= X"03200000";
     when 16#00065# => romdata <= X"05040E00";
-    when 16#00066# => romdata <= X"8410A233";
+    when 16#00066# => romdata <= X"8410A133";
     when 16#00067# => romdata <= X"C4204000";
-    when 16#00068# => romdata <= X"0539A89B";
-    when 16#00069# => romdata <= X"8410A260";
+    when 16#00068# => romdata <= X"0539AE05";
+    when 16#00069# => romdata <= X"8410A25F";
     when 16#0006A# => romdata <= X"C4206004";
     when 16#0006B# => romdata <= X"050003FC";
     when 16#0006C# => romdata <= X"C4206008";
@@ -197,8 +197,8 @@ begin
     when 16#00073# => romdata <= X"12800006";
     when 16#00074# => romdata <= X"033FFC00";
     when 16#00075# => romdata <= X"82106100";
-    when 16#00076# => romdata <= X"0539A81B";
-    when 16#00077# => romdata <= X"8410A260";
+    when 16#00076# => romdata <= X"05248820";
+    when 16#00077# => romdata <= X"8410A3CD";
     when 16#00078# => romdata <= X"C4204000";
     when 16#00079# => romdata <= X"05000080";
     when 16#0007A# => romdata <= X"82100000";
