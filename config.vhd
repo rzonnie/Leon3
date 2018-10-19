@@ -11,13 +11,14 @@ use techmap.gencomp.all;
 
 package config is
 -- Technology and synthesis options
-  constant CFG_FABTECH : integer := artix7;
-  constant CFG_MEMTECH : integer := artix7;
-  constant CFG_PADTECH : integer := artix7;
+  constant CFG_FABTECH : integer := cyclone3;
+  constant CFG_MEMTECH : integer := cyclone3;
+  constant CFG_PADTECH : integer := cyclone3;
+  constant CFG_TRANSTECH : integer := TT_XGTP0;
   constant CFG_NOASYNC : integer := 0;
   constant CFG_SCAN : integer := 0;
 -- Clock generator
-  constant CFG_CLKTECH : integer := virtex;
+  constant CFG_CLKTECH : integer := cyclone3;
   constant CFG_CLKMUL : integer := (1);
   constant CFG_CLKDIV : integer := (10);
   constant CFG_OCLKDIV : integer := 1;
@@ -93,7 +94,7 @@ package config is
 -- DSU UART
   constant CFG_AHB_UART : integer := 1;
 -- JTAG based DSU interface
-  constant CFG_AHB_JTAG : integer := 0;
+  constant CFG_AHB_JTAG : integer := 1;
 -- Ethernet DSU
   constant CFG_DSU_ETH : integer := 0 + 0 + 0;
   constant CFG_ETH_BUF : integer := 1;
