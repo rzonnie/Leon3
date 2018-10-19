@@ -15,7 +15,7 @@ As this project is carried out as an assignment on the University of Twente, we 
 Distributor ID:	Ubuntu
 Description:	Ubuntu 18.04.1 LTS
 Release:	18.04
-Codename:	bionic
+Codename:	bionic beaver
 ```
 
 The following applications are required:
@@ -76,6 +76,8 @@ export QSYS_ROOTDIR="QUARTUS_ROOTDIR/sopc_builder/bin"
 
 # ModelSIM
 export PATH=$PATH:${ALTERAPATH}/modelsim_ase/bin
+# BCC
+export PATH=/opt/sparc-elf/bin:$PATH
 ```
 
 13. Restart your terminal by closing it and opening it again
@@ -88,6 +90,10 @@ For simulations it is very handy to add the grlib library to your path as well:
 ```
 export GRLIB=/path/to/grlib
 ```
+# Installing Bare C compiler (BCC) for soft code compilation
+Download the zipped file from [gaisler](https://www.gaisler.com/anonftp/bcc/bin/linux/).
+copy the file to /opt/
+execute ```sudo tar xjf sparc-elf-GCCVERSION-RELEASE_VERSION.tar.gz```
 
 ## Adding Shortcuts to your Launcher
 1. Create two new files in ```/usr/share/applications/```
@@ -143,6 +149,15 @@ do in the source directory:
 ```
 make distclean
 ```
+
+If the font in the modelsim text editor is too small to read:
+    Close Modelsim
+    Open ~/.modelsim (use "nano ~/.modelsim" in terminal)
+    Find: PrefDefault = ... textFontV2 {Verdana 12} (the name of the font may differ)
+    Change 12 to -12, so it will looks like this: textFontV2 {Verdana -12}
+    Save ~/.modelsim (Ctrl+O and then Enter)
+    Reopen modelsim
+
 ###### References
 http://permalink.gmane.org/gmane.comp.hardware.opencores.leon-sparc/19561
 https://gist.github.com/PrieureDeSion/e2c0945cc78006b00d4206846bdb7657
