@@ -78,6 +78,21 @@ entity leon3mp is
 end;
 
 architecture rtl of leon3mp is
+  -- Matrix component declaration (to be moved in the future)
+  component apbmatrix
+    generic (
+      pindex       : integer := 0;
+      paddr       : integer := 0;
+      pmask       : integer := 16#fff#
+      );
+    port (
+      rst         : in std_ulogic;        -- Global asynchronous reset
+      clk         : in std_ulogic;        -- Global clock
+      apbi        : in apb_slv_in_type;	-- APB slave input
+      apbo        : out apb_slv_out_type  -- apb slave output
+    );
+  end component;
+
   signal vcc : std_logic;
   signal gnd : std_logic;
 
@@ -256,12 +271,16 @@ begin
   gpti <= gpti_dhalt_drive(dsuo.tstop);
 
   uart1 : apbuart      -- UART 1
-    generic map (pindex   => 1, paddr => 1, pirq => 2, console => 1)
+    generic map (pindex => 1, paddr => 1, pirq => 2, console => 1)
     port map (rstn, clkm, apbi, apbo(1), u1i, u1o);
   u1i.rxd    <= rxd1;
   u1i.ctsn   <= '0';
   u1i.extclk <= '0';
   txd1       <= u1o.txd;
+	
+  matrix : apbmatrix	-- matrix multiplication unit
+    generic map (pindex => 5, paddr => 5, pmask => 16#ffe#)
+    port map (rstn, clkm, apbi, apbo(5));
 
 -----------------------------------------------------------------------
 --  Test report module, only used for simulation ----------------------
