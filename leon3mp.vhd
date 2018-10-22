@@ -279,7 +279,7 @@ begin
   txd1       <= u1o.txd;
 	
   matrix : apbmatrix	-- matrix multiplication unit
-    generic map (pindex => 5, paddr => 5, pmask => 16#ffe#)
+    generic map (pindex => 5, paddr => 5, pmask => 16#fff#)
     port map (rstn, clkm, apbi, apbo(5));
 
 -----------------------------------------------------------------------

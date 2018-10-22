@@ -83,10 +83,12 @@ begin
 		variable rdata : std_logic_vector(31 downto 0);
 		variable result : integer;
   begin
-    v := r;
-		v.element_index := (others => '0');
-    rdata := (others => '0');
+	  -- initialize some temporary variables
+		rdata := (others => '0');
 		result := 0;
+		
+		-- load register contents
+    v := r;
     
 		-- read address on bus
 		addr_hold := to_integer(unsigned(apbi.paddr(7 downto 2)));
@@ -100,13 +102,13 @@ begin
           v.calc := apbi.pwdata(30);
 					v.ready := apbi.pwdata(29);
 					v.element_index := apbi.pwdata(7 downto 0);
-        when 4 to 16 =>
+        when 4 to 19 =>
 				  -- row operands
 					v.operand_row(addr_hold-4) := apbi.pwdata(7 downto 0);
 					v.operand_row(addr_hold-3) := apbi.pwdata(15 downto 8);
 					v.operand_row(addr_hold-2) := apbi.pwdata(23 downto 16);
 					v.operand_row(addr_hold-1) := apbi.pwdata(31 downto 24);
-				when 17 to 29 =>
+				when 20 to 35 =>
 				  -- column operands
 					v.operand_column(addr_hold-17) := apbi.pwdata(7 downto 0);
 					v.operand_column(addr_hold-16) := apbi.pwdata(15 downto 8);
@@ -125,19 +127,19 @@ begin
         rdata(30) := r.calc;
 				rdata(29) := r.ready;
 				rdata(7 downto 0) := r.element_index(7 downto 0);
-			when 4 to 16 =>
+			when 4 to 19 =>
 				-- row operands
 				rdata(7 downto 0) := r.operand_row(addr_hold-4);
 				rdata(15 downto 8) := r.operand_row(addr_hold-3);
 				rdata(23 downto 16) := r.operand_row(addr_hold-2);
 				rdata(31 downto 24) := r.operand_row(addr_hold-1);
-			when 17 to 29 =>
+			when 20 to 35 =>
 				-- column operands
 				rdata(7 downto 0) := r.operand_column(addr_hold-17);
 				rdata(15 downto 8) := r.operand_column(addr_hold-16);
 				rdata(23 downto 16) := r.operand_column(addr_hold-15);
 				rdata(31 downto 24) := r.operand_column(addr_hold-14);
-			when 30 to 198 =>
+			when 36 to 204 =>
 				-- result registers
 				rdata(31 downto 0) := r.results(addr_hold-30);
 			when others =>
@@ -145,10 +147,10 @@ begin
 		end case;
 
     -- matrix multiplication
-    if (r.calc = '1')
+    if (v.calc = '1')
 		then
 			mult : for i in 0 to ROW_SIZE-1 loop
-				result := result + (to_integer(signed(rin.operand_row(i))) * to_integer(signed(rin.operand_column(i))));
+				result := result + (to_integer(signed(v.operand_row(i))) * to_integer(signed(v.operand_column(i))));
 			end loop mult;
 			v.results(to_integer(unsigned(v.element_index))) := std_logic_vector(to_signed(result, v.results(to_integer(unsigned(v.element_index)))'length));
 			v.calc := '0';

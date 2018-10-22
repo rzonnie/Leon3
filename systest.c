@@ -10,7 +10,10 @@
  */
 
 // Define address of matrix multiplication peripheral
-#define APBMATRIX_ADDRESS 0x80000400
+#define APBMATRIX_ADDRESS 0x80000500
+
+typedef volatile unsigned int vuint32;
+typedef volatile char vuint8;
 
 // 13x13 matrix A
 const char A[13][13] = {
@@ -47,25 +50,52 @@ const char B[13][13] = {
 };
 
 // Structure to hold the matrix registers
+union matrix_control_register {
+   struct {
+	vuint32 read_data :1;
+	vuint32 calc :1;
+	vuint32 ready :1;
+	vuint32 RESERVED :21;
+	vuint32 element_index :8;
+   } B;
+   vuint32 A;
+};
+
 struct apbmatrix_regs {
-   volatile unsigned int matrix_control;
-   volatile char row[13];
-   volatile char column[13];
-   volatile unsigned int results[169];
+   union matrix_control_register matrix_control;
+   vuint32 row[4];
+   vuint32 column[4];
+   vuint32 results[172];
 };
 
 
 int apbmatrix_test() {
    struct apbmatrix_regs *reg = (struct apbmatrix_regs*) APBMATRIX_ADDRESS;
 
+   // state read data
+   reg->matrix_control.B.read_data = 1;
+
    // load operands
+   reg->row[1] = 1; // dummy value
+   reg->row[2] = 1; // dummy value
+   reg->row[3] = 1; // dummy value
+   reg->row[4] = 1; // dummy value
 
-   // start calculation
+   reg->column[1] = 1; // dummy value
+   reg->column[2] = 1; // dummy value
+   reg->column[3] = 1; // dummy value
+   reg->column[4] = 1; // dummy value
 
-   while (reg->matrix_control & (1 << 31))
-	; // pause until calculation is ready
+   // state is calculate
+   reg->matrix_control.A = (1 << 30) | 0;
 
-   // print results
+   printf("\n Begin! \n");
+   while (!reg->matrix_control.B.ready)
+	; // pause until state ready
+   
+   // print result
+   printf("\n%d\n", reg->results[0]);
+   printf("\n End! \n");
 }
 
 main()
