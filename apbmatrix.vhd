@@ -38,11 +38,11 @@ architecture rtl of apbmatrix is
 
 constant OPERAND_WORD_SIZE : integer := 8;
 constant RESULT_WORD_SIZE : integer := 32;
-constant ROW_SIZE : integer := 13;
+constant ROW_SIZE : integer := 16;
 
 type states is (read_data, calc, ready); -- matrix multiplication states
 type operandtype is array(0 to ROW_SIZE-1) of std_logic_vector(OPERAND_WORD_SIZE-1 downto 0); -- operand register type (13 x 8 bits regsiter)
-type resulttype is array(0 to 168) of std_logic_vector(RESULT_WORD_SIZE-1 downto 0); -- result register (13 x 32 bits regsiter)
+type resulttype is array(0 to 171) of std_logic_vector(RESULT_WORD_SIZE-1 downto 0); -- result register (13 x 32 bits regsiter)
 
 type matrix_regs is record
   -- data reg
@@ -91,7 +91,7 @@ begin
     v := r;
     
 		-- read address on bus
-		addr_hold := to_integer(unsigned(apbi.paddr(7 downto 2)));
+		addr_hold := to_integer(unsigned(apbi.paddr(7 downto 0)));
 		
     -- write registers
     if (apbi.psel(pindex) and apbi.penable and apbi.pwrite) = '1' then
@@ -110,10 +110,10 @@ begin
 					v.operand_row(addr_hold-1) := apbi.pwdata(31 downto 24);
 				when 20 to 35 =>
 				  -- column operands
-					v.operand_column(addr_hold-17) := apbi.pwdata(7 downto 0);
-					v.operand_column(addr_hold-16) := apbi.pwdata(15 downto 8);
-					v.operand_column(addr_hold-15) := apbi.pwdata(23 downto 16);
-					v.operand_column(addr_hold-14) := apbi.pwdata(31 downto 24);
+					v.operand_column(addr_hold-20) := apbi.pwdata(7 downto 0);
+					v.operand_column(addr_hold-19) := apbi.pwdata(15 downto 8);
+					v.operand_column(addr_hold-18) := apbi.pwdata(23 downto 16);
+					v.operand_column(addr_hold-17) := apbi.pwdata(31 downto 24);
         when others =>
           null;
       end case;
@@ -135,13 +135,13 @@ begin
 				rdata(31 downto 24) := r.operand_row(addr_hold-1);
 			when 20 to 35 =>
 				-- column operands
-				rdata(7 downto 0) := r.operand_column(addr_hold-17);
-				rdata(15 downto 8) := r.operand_column(addr_hold-16);
-				rdata(23 downto 16) := r.operand_column(addr_hold-15);
-				rdata(31 downto 24) := r.operand_column(addr_hold-14);
+				rdata(7 downto 0) := r.operand_column(addr_hold-20);
+				rdata(15 downto 8) := r.operand_column(addr_hold-19);
+				rdata(23 downto 16) := r.operand_column(addr_hold-18);
+				rdata(31 downto 24) := r.operand_column(addr_hold-17);
 			when 36 to 204 =>
 				-- result registers
-				rdata(31 downto 0) := r.results(addr_hold-30);
+				rdata(31 downto 0) := r.results(addr_hold-36);
 			when others =>
 				null;
 		end case;

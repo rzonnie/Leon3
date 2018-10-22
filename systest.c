@@ -12,11 +12,11 @@
 // Define address of matrix multiplication peripheral
 #define APBMATRIX_ADDRESS 0x80000500
 
-typedef volatile unsigned int vuint32;
-typedef volatile char vuint8;
+typedef volatile signed int vint32;
+typedef volatile char vint8;
 
 // 13x13 matrix A
-const char A[13][13] = {
+/*const char A[13][13] = {
     {29,1,5,82,117,113,115,67,91,107,75,73,39},
     {84,90,82,59,125,102,122,72,35,59,2,75,22},
     {109,44,125,33,46,125,125,67,16,11,13,124,78},
@@ -48,63 +48,125 @@ const char B[13][13] = {
     {96,50,125,121,7,16,17,44,26,81,95,90,75},
     {25,79,91,112,114,2,37,21,78,88,120,59,104},
 };
+*/
+
+// These are the same matrices A and B transposed, only 4 chars have concatenated to 1 int
+const int A[13][4] = {
+    {1376059677,1131639157,1229679451,39},
+    {995252820,1215981181,1258437411,22},
+    {561851501,1132297518,2081229584,78},
+    {53485138,402670851,2136763515,16},
+    {1293569397,1061636638,2118257732,84},
+    {427578919,152724835,1700879112,104},
+    {1601782535,240938324,2004379992,84},
+    {492704346,475157630,1818564455,122},
+    {1797720888,2020096783,644240234,103},
+    {1281642766,84214570,1293751839,15},
+    {1501313910,1245315925,860762390,28},
+    {1079475062,341516381,2000774741,16},
+    {1913147681,1916751173,574497322,103}
+};
+
+const int B[13][4] = {
+    {1649244519,1449729343,2013934653,101},
+    {1363546142,775833430,1365644652,103},
+    {1095317033,276325380,1158679934,39},
+    {86591813,1562855440,1245388654,106},
+    {1365000802,443685158,1081424392,115},
+    {104741389,1680214837,922749525,15},
+    {708734792,1063874670,1174486083,88},
+    {1935933719,1949828107,1028392484,75},
+    {2054385234,1568503881,726928665,24},
+    {240608328,1074486833,709382708,118},
+    {1007844972,1813933931,286086187,41},
+    {2038248032,739315719,1516196122,75},
+    {1885032217,354746994,997742670,104}
+};
+
+// Result matrix encapsulated in register (for now)!
 
 // Structure to hold the matrix registers
 union matrix_control_register {
    struct {
-	vuint32 read_data :1;
-	vuint32 calc :1;
-	vuint32 ready :1;
-	vuint32 RESERVED :21;
-	vuint32 element_index :8;
+	vint32 read_data :1;
+	vint32 calc :1;
+	vint32 ready :1;
+	vint32 RESERVED :21;
+	vint32 element_index :8;
    } B;
-   vuint32 A;
+   vint32 A;
 };
 
 struct apbmatrix_regs {
    union matrix_control_register matrix_control;
-   vuint32 row[4];
-   vuint32 column[4];
-   vuint32 results[172];
+   vint32 row[4];
+   vint32 column[4];
+   vint32 results[13][13];
 };
 
+// Define register
+struct apbmatrix_regs *reg = (struct apbmatrix_regs*) APBMATRIX_ADDRESS;
 
-int apbmatrix_test() {
-   struct apbmatrix_regs *reg = (struct apbmatrix_regs*) APBMATRIX_ADDRESS;
+void printMatrix(vint32 matrix[13][13]) {
+  vint32* contentPointer = &matrix[0][0];  
+
+  char i;
+  printf("Matrix = \n");
+  for (i = 0; i < 169; i++) {
+    if (i % 13 == 0) {
+      printf("\t[");
+    }
+
+    printf("%d", *(contentPointer + i));
+
+    if (i % 13 == 13 - 1) {
+      printf("],");
+    } else {
+      printf(",\t");
+    }
+  }
+}
+
+void matrixMultiply(const int A[13][4], const int B[13][4]) {
+   printf("\n Begin! \n");
 
    // state read data
    reg->matrix_control.B.read_data = 1;
-
-   // load operands
-   reg->row[0] = 1; // dummy value
-   reg->row[1] = 2; // dummy value
-   reg->row[2] = 3; // dummy value
-   reg->row[3] = 4; // dummy value
-
-   reg->column[0] = 5; // dummy value
-   reg->column[1] = 6; // dummy value
-   reg->column[2] = 7; // dummy value
-   reg->column[3] = 8; // dummy value
-
-   // state is calculate
-   reg->matrix_control.A = (1 << 30) | 0;
-
-   printf("\n Begin! \n");
-   while (!reg->matrix_control.B.ready)
-	; // pause until state ready
    
-   // print result
-   printf("\n%d\n", reg->results[0]);
+   // multiply all vectors
+   char i, j, k = 0;
+   for (i = 0; i < 13; i++) {
+      // Load row elements
+      reg->row[0] = A[i][0]; // row elements 0 - 3
+      reg->row[1] = A[i][1]; // row elements 4 - 7
+      reg->row[2] = A[i][2]; // row elements 8 - 11
+      reg->row[3] = A[i][3]; // row elements 12 - 15
+
+      for (j = 0; j < 13; j++) {
+         // Load row elements
+         reg->column[0] = A[j][0]; // column elements 0 - 3
+         reg->column[1] = A[j][1]; // column elements 4 - 7
+         reg->column[2] = A[j][2]; // column elements 8 - 11
+         reg->column[3] = A[j][3]; // column elements 12 - 15
+
+         // state is calculate
+         reg->matrix_control.A = (1 << 30) | k;
+
+         while (!reg->matrix_control.B.ready)
+	    ; // pause until state ready
+         
+         // increase index
+         k++;
+      }
+   }
    printf("\n End! \n");
 }
 
 main()
 
 {
-	
-	printf("\n\n  Testing matrix multiplication!!!\n");
-	apbmatrix_test();
-	printf("\n\n  Done testing matrix multiplication!!!\n");
+	matrixMultiply(A, B);
+	printMatrix(reg->results);
 
 	report_start();
 
