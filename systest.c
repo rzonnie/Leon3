@@ -76,15 +76,15 @@ int apbmatrix_test() {
    reg->matrix_control.B.read_data = 1;
 
    // load operands
-   reg->row[1] = 1; // dummy value
-   reg->row[2] = 1; // dummy value
-   reg->row[3] = 1; // dummy value
-   reg->row[4] = 1; // dummy value
+   reg->row[0] = 1; // dummy value
+   reg->row[1] = 2; // dummy value
+   reg->row[2] = 3; // dummy value
+   reg->row[3] = 4; // dummy value
 
-   reg->column[1] = 1; // dummy value
-   reg->column[2] = 1; // dummy value
-   reg->column[3] = 1; // dummy value
-   reg->column[4] = 1; // dummy value
+   reg->column[0] = 5; // dummy value
+   reg->column[1] = 6; // dummy value
+   reg->column[2] = 7; // dummy value
+   reg->column[3] = 8; // dummy value
 
    // state is calculate
    reg->matrix_control.A = (1 << 30) | 0;
