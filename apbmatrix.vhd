@@ -42,7 +42,7 @@ constant ROW_SIZE : integer := 16;
 
 type states is (read_data, calc, ready); -- matrix multiplication states
 type operandtype is array(0 to ROW_SIZE-1) of std_logic_vector(OPERAND_WORD_SIZE-1 downto 0); -- operand register type (13 x 8 bits regsiter)
-type resulttype is array(0 to 171) of std_logic_vector(RESULT_WORD_SIZE-1 downto 0); -- result register (13 x 32 bits regsiter)
+-- type resulttype is array(0 to 168) of std_logic_vector(RESULT_WORD_SIZE-1 downto 0); -- result register (13 x 32 bits regsiter)
 
 type matrix_regs is record
   -- data reg
@@ -58,8 +58,8 @@ type matrix_regs is record
   -- operand column (8 bit per element)
   operand_column : operandtype;  
 
-  -- result reg (13 times 24 bit value)
-  results : resulttype;
+  -- result reg (13 times 32 bit value)
+  results : std_logic_vector(RESULT_WORD_SIZE-1 downto 0);
 end record;
 
 constant REVISION : integer := 0;
@@ -139,9 +139,9 @@ begin
 				rdata(15 downto 8) := r.operand_column(addr_hold-19);
 				rdata(23 downto 16) := r.operand_column(addr_hold-18);
 				rdata(31 downto 24) := r.operand_column(addr_hold-17);
-			when 36 to 204 =>
+			when 36 to 39 =>
 				-- result registers
-				rdata(31 downto 0) := r.results(addr_hold-36);
+				rdata(31 downto 0) := r.results(31 downto 0);
 			when others =>
 				null;
 		end case;
@@ -152,7 +152,7 @@ begin
 			mult : for i in 0 to ROW_SIZE-1 loop
 				result := result + (to_integer(signed(v.operand_row(i))) * to_integer(signed(v.operand_column(i))));
 			end loop mult;
-			v.results(to_integer(unsigned(v.element_index))) := std_logic_vector(to_signed(result, v.results(to_integer(unsigned(v.element_index)))'length));
+			v.results := std_logic_vector(to_signed(result, v.results'length));
 			v.calc := '0';
 			v.ready := '1';
     end if;
@@ -166,7 +166,7 @@ begin
 			v.element_index := (others => '0');
 			v.operand_row := (others => (others => '0'));
 			v.operand_column := (others => (others => '0'));
-			v.results := (others => (others => '0'));
+			v.results := (others => '0');
     end if;
 
     -- update registers

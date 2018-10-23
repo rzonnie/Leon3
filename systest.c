@@ -37,7 +37,7 @@ struct apbmatrix_regs {
     union matrix_control_register matrix_control;
     vint32 row[4];
     vint32 column[4];
-    vint32 results[13][13];
+    vint32 result;
 };
 
 // These are the same matrices A and B transposed, only 4 chars have concatenated to 1 int
@@ -73,6 +73,9 @@ const int B[13][4] = {
         {2038248032, 739315719,  1516196122, 75},
         {1885032217, 354746994,  997742670,  104}
 };
+
+// Result matrix
+int C[13][13] = {};
 
 // Register defined as global
 struct apbmatrix_regs *reg = (struct apbmatrix_regs *) APBMATRIX_ADDRESS;
@@ -110,7 +113,7 @@ void printMatrix(vint32 matrix[13][13]) {
  * @param A 13x4 matrix (actually 13x13 8 bit elements)
  * @param B 13x4 matrix (actually 13x13 8 bit elements)
  */
-void matrixMultiply(const int A[13][4], const int B[13][4]) {
+void matrixMultiply(const int A[13][4], const int B[13][4], int C[13][13]) {
     printf("\n Begin! \n");
 
     // multiply all vectors
@@ -140,8 +143,11 @@ void matrixMultiply(const int A[13][4], const int B[13][4]) {
 
             while (!reg->matrix_control.B.ready); // pause until state ready
 
+            // fetch result
+            C[i][j] = reg->result;
+
             // calc is done, so reset
-            reg->matrix_control.B.calc = 0;
+            reg->matrix_control.B.ready = 0;
 
             // increase index
             k++;
@@ -156,12 +162,14 @@ void matrixMultiply(const int A[13][4], const int B[13][4]) {
  * @return int (either 0 or 1 showing respectively success or failure)
  */
 int main() {
-    matrixMultiply(A, B);
+    matrixMultiply(A, B, C);
     //printMatrix(reg->results);
-
-    // Spits 64578 and < so not quite working as expected just yet
-    printf("%d\n", reg->results[0][0]);
-    printf("%d\n", reg->results[12][12]);
+    int i, j;
+    for (i = 0; i < 13; i++) {
+        for (j = 0; j < 13; j++) {
+            printf("%d\n", C[i][j]);
+        }
+    }
 
     report_start();
 
