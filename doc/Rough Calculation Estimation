@@ -1,0 +1,8 @@
+600,000 ns
+333,000 ns -
+-------
+267,000 ns
+267 us per calculation
+1000	   x
+-------
+267 ms for 1000 calculations
