@@ -8,7 +8,7 @@ CONFIG_SYN_INFERRED
   - Inferred: Generic FPGA or ASIC targets if your synthesis tool
     is capable of inferring RAMs and pads automatically.
 
-  - Actel ProAsic/P/3, IGLOO/2, RTG4 and Axcelerator FPGAs
+  - Actel ProAsic/P/3, IGLOO/2, RTG4, PolarFire and Axcelerator FPGAs
   - Aeroflex UT25CRH Rad-Hard 0.25 um CMOS
   - Altera: Most Altera FPGA families
   - Altera-CycloneIII: Altera Cyclone-III/IV FPGA family
@@ -646,7 +646,6 @@ CONFIG_CACHE_FT_NONE
 
   None - No protection
   Parity     - Technology agnostic parity protection
-  SECDEC-BCH - SECDED for cache, slow and large area overhead
   TechSpec   - Use target technology protection
 
   The recommended setting is Parity. Target technologies
@@ -813,6 +812,48 @@ Programmable MAC/IP address
 CONFIG_DSU_ETH_PROG
   Say Y to make the LSB 4 bits of the EDCL MAC and IP address
   configurable using the ethi.edcladdr inputs.
+PROM/SRAM memory controller
+CONFIG_SRCTRL
+  Say Y here to enable a simple (and small) PROM/SRAM memory controller.
+  The controller has a fixed number of waitstates, and is primarily
+  intended for FPGA implementations. The RAM data bus is always 32 bits,
+  the PROM can be configured to either 8 or 32 bits (hardwired).
+
+8-bit memory support
+CONFIG_SRCTRL_8BIT
+  If you say Y here, the simple PROM/SRAM memory controller will
+  implement 8-bit PROM mode.
+
+PROM waitstates
+CONFIG_SRCTRL_PROMWS
+  Select the number of waitstates for PROM access.
+
+RAM waitstates
+CONFIG_SRCTRL_RAMWS
+  Select the number of waitstates for RAM access.
+
+IO waitstates
+CONFIG_SRCTRL_IOWS
+  Select the number of waitstates for IO access.
+
+Read-modify-write support
+CONFIG_SRCTRL_RMW
+  Say Y here to perform byte- and half-word writes as a
+  read-modify-write sequence. This is necessary if your
+  SRAM does not have individual byte enables. If you are
+  unsure, it is safe to say Y.
+
+SRAM bank select
+CONFIG_SRCTRL_SRBANKS
+  Select number of SRAM banks.
+
+SRAM bank size select
+CONFIG_SRCTRL_BANKSZ
+  Select size of SRAM banks in kBytes.
+
+PROM address bit select
+CONFIG_SRCTRL_ROMASEL
+  Select address bit for PROM bank decoding.
 Leon2 memory controller
 CONFIG_MCTRL_LEON2
   Say Y here to enable the LEON2 memory controller. The controller
@@ -889,16 +930,59 @@ CONFIG_MCTRL_PROGPAGE
   will allow to dynamically enable/disable page burst by setting
   bit 17 in MCFG2.
 
-AHB status register
-CONFIG_AHBSTAT_ENABLE
-  Say Y here to enable the AHB status register (AHBSTAT IP).
-  The register will latch the AHB address and master index when
-  an error response is returned by any AHB slave.
+SDRAM controller enable
+CONFIG_SDCTRL
+  Say Y here to enabled a 32/64-bit PC133 SDRAM controller. 
 
-SDRAM separate address buses
-CONFIG_AHBSTAT_NFTSLV
-  The AHB status register can also latch the AHB address on an external
-  input. Select here how many of such inputs are required.
+SDRAM controller inverted clock
+CONFIG_SDCTRL_INVCLK
+  If you say Y here, the SDRAM clock will be inverted in respect to the
+  system clock and the SDRAM signals. This will limit the SDRAM frequency
+  to 50/66 MHz, but has the benefit that you will not need a PLL to
+  generate the SDRAM clock. On FPGA targets, say Y. On ASIC targets,
+  say N and tell your foundry to balance the SDRAM clock output.
+
+64-bit data bus
+CONFIG_SDCTRL_BUS64
+  Say Y here to enable 64-bit data bus.
+
+Page burst enable
+CONFIG_SDCTRL_PAGE
+  Say Y here to enable SDRAM page burst operation. This will implement
+  read operations using page bursts rather than 8-word bursts and save
+  about 500 gates (100 LUTs). Note that not all SDRAM supports page 
+  burst, so use this option with care.
+
+Programmable page burst enable
+CONFIG_SDCTRL_PROGPAGE
+  Say Y here to enable programmable SDRAM page burst operation. This
+  will allow to dynamically enable/disable page burst by setting
+  bit 17 in MCFG2.
+
+On-chip rom
+CONFIG_AHBROM_ENABLE
+  Say Y here to add a block on on-chip rom to the AHB bus. The ram
+  provides 0-waitstates read access,  burst support, and 8-, 16- 
+  and 32-bit data size. The rom will be syntheised into block rams
+  on Xilinx and Altera FPGA devices, and into gates on ASIC 
+  technologies. GRLIB includes a utility to automatically create
+  the rom VHDL model (ahbrom.vhd) from an ELF file. Refer to the GRLIB
+  documentation for details.
+
+On-chip rom address
+CONFIG_AHBROM_START
+  Set the start address of AHB ROM (HADDR[31:20]). The ROM will occupy
+  a 1 Mbyte slot at the selected address. Default is 000, corresponding
+  to AHB address 0x00000000. When address 0x0 is selected, the rom area
+  of any other memory controller is set to 0x10000000 to avoid conflicts.
+
+Enable pipeline register for on-chip rom
+CONFIG_AHBROM_PIPE
+  Say Y here to add a data pipeline register to the on-chip rom.
+  This should be done when the rom is implemenented in (ASIC) gates,
+  or in logic cells on FPGAs. Do not use this option when the rom is
+  implemented in block rams. If enabled, the rom will operate with 
+  one waitstate.
 
 On-chip ram
 CONFIG_AHBRAM_ENABLE
@@ -943,6 +1027,11 @@ CONFIG_GRETH_FIFO4
   The MAC core will perform AHB burst read/writes with half the
   size of the FIFO depth.
 
+CONFIG_GRETH_FMC_MODE
+  Enable support for Ethernet FMC extension board.
+  This option is only valid for Xilinx reference designs
+  with Ethernet extension boards via FMC connectors 
+
 CONFIG_GRETH_FT
   Enable fault-tolerance (parity with sparing) for internal RAM
   in Ethernet core. Note that FT for EDCL buffer is enabled via
@@ -951,81 +1040,28 @@ CONFIG_GRETH_FT
 CONFIG_GRETH_EDCLFT
   Enable protection for EDCL buffer. This is typically not used as
   the EDCL debug link is not used in harsh environments.
-1553 controller enable
-CONFIG_GR1553B_ENABLE
-  Say Y here to enable the GR1553B MIL-STD-1553B/AS15531 interface core.
-
-Bus Controller (BC) enable 
-CONFIG_GR1553B_BCEN 
-  If you say Y here, the core will include support for acting as a Bus 
-  Controller, i.e. the 1553 bus master. 
-
-  Both Bus Controller and Remote Terminal support can be built
-  in. However, at run time only one of the roles can be active on the
-  bus. If you need to have a BC and RT at the same time, two instances
-  of the core must be added to the design.
-
-  Setting this option to N reduces the size of the core by around 25%
-  of it's full size.
-
-Remote Terminal (RT) enable
-CONFIG_GR1553B_RTEN 
-  If you say Y here, the core will include support for acting as a 
-  Remote Terminal, i.e. the 1553 bus slave.
-
-  Both Bus Controller and Remote Terminal support can be built
-  in. However, at run time only one of the roles can be active on the
-  bus. If you need to have a BC and RT at the same time, two instances
-  of the core must be added to the design.
-
-  Setting this option to N reduces the size of the core by around 20%
-  of it's full size.
-
-Bus Monitor (BM) enable
-CONFIG_GR1553B_BMEN
-
-  If you say Y here, the core will include support for acting as a Bus
-  Monitor, a passive logger with no transmit ability. 
-
-  The Bus Monitor can be run by itself or run in parallel while
-  running as Bus Controller or Remote Terminal.
-
-  Setting this option to N reduces the size of the core by around 10%
-  of it's full size.
 CAN interface enable
 CONFIG_CAN_ENABLE
-  Say Y here to enable one or more CAN cores. The cores has one
+  Say Y here to enable the CAN interace from OpenCores. The core has one
   AHB slave interface for accessing the control registers. The CAN core
-  is register-compatible with the SAJ1000 core from Philips, with a
-  few exceptions. See the GRLIP IP manual for details.
-
-CONFIG_CAN_NUM
-  Number of CAN cores. The module allows up to 8 independent
-  CAN cores to be implemented.
+  ir register-compatible with the SAJ1000 core from Philips.
 
 CAN register address
 CONFIG_CANIO
-  The control registers of each CAN core occupies 256 bytes, and 
-  address space needed for the full module is thus 2 Kbyte. The cores
-  are mapped in the AHB bus I/O area (0xFFF00000 - 0xFFFFF000). 
-  This setting defines at which address in the I/O area the registers
-  appear (HADDR[19:8]).
+  The control registers of the CAN core occupy 4 kbyte, and are 
+  mapped in the AHB bus I/O area (0xFFF00000 - 0xFFFFF000). This setting
+  defines at which address in the I/O area the registers appear (HADDR[19:8]).
 
 CAN interrupt
 CONFIG_CANIRQ
   Defines which interrupt number the CAN core will generate.
 
-CAN interrupt
-CONFIG_CANSEPIRQ
-  Say Y here to assign an individual interrupt to each CAN core,
-  starting from the base interrupt number. If set to N, all
-  CAN cores will generate the same interrupt.
-
-CAN FT memories
-CONFIG_CAN_FT
-  If you say Y here, the CAN FIFOs will be implemented using
-  SEU protected RAM blocks. Only applicable to the FT version
-  of grlib.
+CAN loob-back testing
+CONFIG_CANLOOP
+  If you say Y here, the receiver and trasmitter of the CAN core will
+  be connected together in a loop-back fashion. This will make it 
+  possible to perform loop-back test, but not data will be sent
+  or received from the outside. ONLY for testing!
 
 CAN Synchronous reset
 CONFIG_CAN_SYNCRST
@@ -1034,61 +1070,229 @@ CONFIG_CAN_SYNCRST
   when the target library does not implement registers with
   async reset. Unless you know what you are doing, say N.
 
-Gaisler Research SPI controller
-CONFIG_SPICTRL_ENABLE
-  Say Y here to enable the SPI controller(s)
+CAN FT memories
+CONFIG_CAN_FT
+  If you say Y here, the CAN FIFOs will be implemented using
+  SEU protected RAM blocks. Only applicable to the FT version
+  of grlib.
+PCI interface type
+CONFIG_GRPCI2_MASTER
+  Enable the PCI initiator.
 
-CONFIG_SPICTRL_NUM
-  Number of SPI controllers to implement in design. Note that most
-  template designs are limited to one SPI controller.
-  Configuration options made here in xconfig will apply to all
-  implemented SPI controllers.
+PCI interface type
+CONFIG_GRPCI2_TARGET
+  Enable the PCI target.
 
-CONFIG_SPICTRL_MAXWLEN
-  0: Core will support lengths up to 32 bits
-  1-2: Illegal values
-  3-15: Maximum word length will be value+1 (4-16)
+PCI DMA controller
+CONFIG_GRPCI2_DMA
+  Enable the PCI DMA controller.
 
-CONFIG_SPICTRL_SYNCRAM
-  Say Y here to use SYNCRAM_2P components for the core's receive
-  and transmit queues. This is the recommended setting, particularly
-  if the core is implemented with support for automatic mode.
+PCI device-id
+CONFIG_GRPCI2_DEVICEID
+  Sets the PCI device ID in the PCI configuration area.
 
-CONFIG_SPICTRL_FT
-  Fault-tolerance for internal buffers. Only applicable if core
-  buffers are implemented with SYNCRAM components.
+PCI vendor-id
+CONFIG_GRPCI2_VENDORID
+  Sets the PCI vendor ID in the PCI configuration area.
 
-GRLIB SPI2AHB core
-CONFIG_SPI2AHB
-  Say Y here to enable SPI2AHB
+PCI class-code
+CONFIG_GRPCI2_CLASS
+  Sets the PCI class-code in the PCI configuration area.
 
-CONFIG_SPI2AHB_APB
-  Say Y here to include the core's APB interface
+PCI revision-id
+CONFIG_GRPCI2_REVID
+  Sets the PCI revision ID in the PCI configuration area.
 
-CONFIG_SPI2AHB_ADDRH
-  Defines address bits 31:16 of the core's AHB protection area 
+PCI Capability pointer
+CONFIG_GRPCI2_CAPPOINT
+  Sets the PCI capability pointer in the PCI configuration area. 
+  Sets the offset for the extended PCI Configuration Space.
 
-CONFIG_SPI2AHB_ADDRL
-  Defines address bits 15:0 of the core's AHB protection area 
+PCI Next Capability pointer
+CONFIG_GRPCI2_NEXTCAPPOINT
+  Sets the PCI capability pointer of second item in the extended 
+  capability list (in the PCI configuration) If no user defined 
+  extended capability item is implemented this should be set to 0.
 
-CONFIG_SPI2AHB_MASKH
-  Defines mask bits 31:16 of the core's AHB protection area 
+PCI BAR size
+CONFIG_GRPCI2_BAR0
+  Set the size of BAR 0. 26 => bit[31:26] in the BAR register is 
+  implemented. BAR size = 64 MiB.
 
-CONFIG_SPI2AHB_MASKL
-  Defines mask bits 15:0 of the core's AHB protection area 
+PCI BAR size
+CONFIG_GRPCI2_BAR1
+  see help for BAR0.
 
-CONFIG_SPI2AHB_RESEN
-  Say Y here to enable the core after reset (APB version only)
+PCI BAR size
+CONFIG_GRPCI2_BAR2
+  see help for BAR0.
 
-CONFIG_SPI2AHB_CPOL
-  The core's clock polarity. Valid values are 0 and 1.
+PCI BAR size
+CONFIG_GRPCI2_BAR3
+  see help for BAR0.
 
-CONFIG_SPI2AHB_CPHA
-  The core's clock phase. Valid values are 0 and 1.
+PCI BAR size
+CONFIG_GRPCI2_BAR4
+  see help for BAR0.
 
-CONFIG_SPI2AHB_FILTER
-  Core filter. See IP core documentation for filter VHDL generic
+PCI BAR size
+CONFIG_GRPCI2_BAR5
+  see help for BAR0.
 
+FIFO depth
+CONFIG_GRPCI2_FIFO8
+  The number words in each PCI FIFO buffer.
+
+FIFO count
+CONFIG_GRPCI2_FIFOCNT1
+  The number buffer implemented in each FIFO.
+
+GRPCI2 PCI little-endian
+CONFIG_GRPCI2_ENDIAN
+  Set the default PCI bus endianes.
+
+GRPCI2 Device Interrupt
+CONFIG_GRPCI2_DINT
+  Enable the device to assert the PCI int signal.
+
+GRPCI2 Device Interrupt mask
+CONFIG_GRPCI2_DINTMASK
+  The default mask. '1' = enable.
+
+GRPCI2 Host Interrupt
+CONFIG_GRPCI2_HINT
+  Enable the device to sample the PCI int signal.
+
+GRPCI2 Host Interrupt mask
+CONFIG_GRPCI2_HINTMASK
+  The default mask. '1' = enable.
+
+GRPCI2 PCI trace buffer
+CONFIG_GRPCI2_TRACE0
+  Set the depth of the PCI trace buffer.
+
+GRPCI2 Input pad bypass
+CONFIG_GRPCI2_BYPASS
+  If the PADs do not implements output-to-input bypass, this option 
+  implements the bypass in the core.
+
+Extended Configuration Space mappit
+CONFIG_GRPCI2_EXTCFG
+  The mapping of the user defined Extended PCI Configuration Space 
+  to AMBA.
+
+PCI arbiter enable
+CONFIG_PCI_ARBITER
+  To enable a PCI arbiter, say Y here.
+
+PCI APB interface enable
+CONFIG_PCI_ARBITER_APB
+  Say Y here to enable the APB interface on the PCI arbiter. This makes
+  it possible to dynamically re-assign PCI master priorities. See the
+  PCI arbiter manual for details.
+
+PCI arbiter request signals
+CONFIG_PCI_ARBITER_NREQ
+  The number of PCI bus request/grant pairs. Should be not
+  be more than 8. Note that the processor needs one, so the
+  minimum should be 2.
+
+Spacewire link
+CONFIG_SPW_ENABLE
+  Say Y here to enable one or more Spacewire serial links. The links
+  are based on the GRSPW core from Gaisler Research.
+
+Number of spacewire links
+CONFIG_SPW_NUM
+  Select the number of links to implement. Each link will be a
+  separate AHB master and APB slave for configuration.
+
+AHB FIFO depth
+CONFIG_SPW_AHBFIFO4
+  Select the AHB FIFO depth (in 32-bit words).
+
+RX FIFO depth
+CONFIG_SPW_RXFIFO16
+  Select the receiver FIFO depth (in bytes).
+
+RMAP protocol
+CONFIG_SPW_RMAP
+  Enable hardware target support for the RMAP protocol (
+  draft C for GRSPW1 and ECSS-E-ST-50-11C Draft V1.3 
+  for GRSPW2).
+
+RMAP Buffer depth
+CONFIG_SPW_RMAPBUF2
+  Select the size of the RMAP buffer (in bytes).
+
+RMAP CRC
+CONFIG_SPW_RMAPCRC
+  Enable hardware calculation of the RMAP CRC checksum. RMAP CRC
+  is always enabled when the RMAP hardware target is enabled so this
+  parameter will have no effect in that case.
+
+Rx unaligned
+CONFIG_SPW_RXUNAL
+  Enable support for byte writes used for non word-aligned 
+  receiver buffer addresses. Without this enabled data will
+  still be written at the correct location but complete words
+  will always be written so data outside the intended boundaries
+  might be overwritten.
+
+Netlists
+CONFIG_SPW_NETLIST
+  Use the netlist version of GRSPW. This option is required if
+  you have not licensed the source code of the Spacewire core.
+  Currently only supported for Xilinx and Actel FPGAs.
+  The AHB/RX FIFO sizes should be set to 16 word/byte. If the
+  RMAP is enabled, set the buffer size to 128 bytes. Other netlist
+  configurations can be requested from Gaisler Research.
+
+Spacewire FT
+CONFIG_SPW_FT
+  Say Y here to implement the Spacewire block rams with fault-tolerance
+  against SEU errors.
+
+Spacewire core
+CONFIG_SPW_GRSPW1
+  Select to use GRSPW1 core or GRSPW2 core.
+
+DMA channels
+CONFIG_SPW_DMACHAN
+  Set the number of DMA channels for the GRSPW2 core.
+  Set to 1 for now ...
+
+Ports
+CONFIG_SPW_PORTS
+  Set the number of SpaceWire ports for the GRSPW2 core
+
+Same clock for SpaceWire receiver and transmitter
+CONFIG_SPW_RTSAME            
+  Say Y here if the same clock is connected to both the receiver
+  and transmitter in the GRSPW2 core. This will remove two
+  asynchronous resets and some synchronization logic. This is only
+  applicable for the SDR and DDR inputs modes.
+
+
+Receiver clock type
+CONFIG_SPW_RX_SDR
+  Selects the input clocking scheme for the GRSPW2. SDR means that the
+  core samples data and strobe using single data rate registers at the
+  receiver clock frequency. DDR is the same except DDR registers are used.
+  XOR selects the traditional self clocking scheme using a xor gate. 
+  XOR-ER selects self clocking with external clock recovery (can be used
+  on Microsemi RTG4 technology) where XOR-ER1 makes use of the same design
+  of single data registers as XOR. XOR-ER2 makes use of a DDR register.
+  Aeroflex sets the receiver in a mode compatible with the Aeroflex
+  SpaceWire transceiver.
+
+Receiver clock type
+CONFIG_SPW_TX_SDR
+  Selects the output clocking scheme for the GRSPW2. SDR means that the
+  core transmits data and strobe using single data rate registers at the
+  transmitter clock frequency. DDR is the same except DDR registers are used.
+  Aeroflex sets the transmitter in a mode compatible with the Aeroflex
+  SpaceWire transceiver.
 UART1 enable
 CONFIG_UART1_ENABLE
   Say Y here to enable UART1, or the console UART. This is needed to
@@ -1100,6 +1304,18 @@ CONFIG_UA1_FIFO1
   be set to 1 - 32 bytes. Use 1 for minimum area, or 8 - 32 for
   maximum throughput.
 
+
+UART2 enable
+CONFIG_UART2_ENABLE
+  Say Y here to enable UART2, or the secondary UART. This UART can be
+  used to connect a second console (uClinux) or to control external
+  equipment.
+
+UART2 FIFO
+CONFIG_UA2_FIFO1
+  The UART has configurable transmitt and receive FIFO's, which can
+  be set to 1 - 32 bytes. Use 1 for minimum area, or 8 - 32 for
+  maximum throughput.
 
 LEON3 interrupt controller
 CONFIG_IRQ3_ENABLE

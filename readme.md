@@ -137,6 +137,11 @@ It is assumed you have correctly cloned the repository and you have changed your
 2. Instantiate a new Quartus Prime project (.qpf): ```make quartus```
 3. Open Quartus by hand or type ```make quartus-launch```
 
+## Enabling hardware multiplications
+The Leon3 core can enable hardware multiplications. You should do:
+1. Open config.vhd
+2. Change ```CFG_V8``` to ```constant CFG_V8 : integer := 16#32# + 4*0;```
+
 ## Committing files
 As we don't want to make a mess out of this repository, please run ```make distclean``` before running ```git add -a```. Sorry for the inconvenience, we are looking for another solution.
 
@@ -162,3 +167,5 @@ If the font in the modelsim text editor is too small to read:
 http://permalink.gmane.org/gmane.comp.hardware.opencores.leon-sparc/19561
 https://gist.github.com/PrieureDeSion/e2c0945cc78006b00d4206846bdb7657
 https://github.com/PrieureDeSion/Randoms/blob/master/VHDL/Getting%20Started.pdf
+https://classes.engineering.wustl.edu/cse465/docs/bcc.html
+

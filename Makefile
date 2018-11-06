@@ -10,6 +10,7 @@ VHDLSIMFILES=testbench.vhd
 SIMTOP=testbench
 CLEAN=soft-clean
 TECHLIBS=altera altera_mf cycloneiii
+LD_FLAGS=-qnoambapp -mcpu=v8
 
 # Libraries, directories and files in GRLIB that should not be compiled for this design
 LIBSKIP = core1553bbc core1553brm core1553brt gr1553 corePCIF \
