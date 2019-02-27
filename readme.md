@@ -67,19 +67,18 @@ export PATH=$PATH:${ALTERAPATH}/quartus/bin
 export PATH=$PATH:${ALTERAPATH}/nios2eds/bin
 export PATH=$PATH:${QSYS_ROOTDIR}
 export QUARTUS_64BIT=1
-
 export QSYS_ROOTDIR="QUARTUS_ROOTDIR/sopc_builder/bin"
+
+# ModelSIM
+export PATH=$PATH:${ALTERAPATH}/modelsim_ase/bin
+# BCC
+export PATH=/opt/sparc-elf/bin:$PATH
 ```
 13. Re-open your terminal and edit your binary vsim launch file (if you are unsure where this is located type ```which vsim```)
 
 change ```mode=${MTI_VCO_MODE:-""}``` to ```mode=${MTI_VCO_MODE:-"32"}```
 add ```export LD_LIBRARY_PATH=${dir}/lib32``` below ```dir=`dirname "$arg0"` ```
 change ```vco="linux_rh60"``` to ```vco="linux"```
-# ModelSIM
-export PATH=$PATH:${ALTERAPATH}/modelsim_ase/bin
-# BCC
-export PATH=/opt/sparc-elf/bin:$PATH
-```
 
 13. Restart your terminal by closing it and opening it again
 14. You should now be able to launch quartus by typing ```quartus``` and ModelSIM can be launched with ```vsim```
